@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.js"></script>
+<script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
+<script src="https://d3js.org/d3-color.v1.min.js"></script>
+
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <style type="text/css">
+    </style>
+
+
+</head>
+
+<body>
+    <h1 id="Score">0</h1>
+
+    <div id="Over">
+        <dialog open>
+            <p id="Message"></p>
+            <button id="Restart">Restart</button><button id="Quit"></buttonid>Quit</button>
+        </dialog>
+
+
+
+
+    </div>
+
+
+    <script type="text/javascript">
+        //when Hit a Cube
+        document.getElementById("Over").style.display = "block";
+        document.getElementById("Message").innerHTML = "Play the game!";
+
+        document.getElementById("Restart").onclick = function () { restart() };
+        document.getElementById("Quit").onclick = function () { quit() };
+
+        document.getElementById("Restart").innerHTML = "Start";
+        // //When u have a level up
+        // document.getElementById("LevelUp").style.display = "none";
+        // document.getElementById("Continue").onclick = function () { round2() };
+
+
+        var stage = 1;
+        var score = 0;
+        var gameOver = false;
+        var finished = false;
+        var started = false;
+        //Varibles for the sphere
+        var x, y, z;
+        var plane;
+        var xpostion, ypostion, zpostion;
+        var geometry, material, sphere;
+        var scene = new THREE.Scene();
+        var renderer = new THREE.WebGLRenderer();
+        var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        //adds 0.1 t0 ball each time to change colour
+        var addColour = 0.1;
+
+        var ccube;
+        //speeds
+        var xSPEED = 0.7;
+        var xspeed = xSPEED;
+        var levelUpSpeed = 0.12;//dont use
+
+        //Varibles for the cube
+        var cubeGeom, material3;
+        var cube;
+        var cubeypostion;
+
+        //BackGround Colour
+        renderer.setClearColor(0x87CEEB);
+
+        function quit() {
+            close();
+        }
+
+        function restart() {
+            if (!started) {
+                started = true;
+                document.getElementById("Restart").innerHTML = "Restart";
+                var x = document.getElementById("Over");
+                x.style.display = "none";
+                return;
+            }
+
+
+
+            /*for(var i = 0; i < ccube.length; i++){
+                ccube[i].cube.position.x = ccube[i].x;
+                ccube[i].cube.position.y = ccube[i].y;
+                ccube[i].cube.position.z = ccube[i].z;            
+            }
+ 
+            plane.position.x = 0;
+            plane.position.y = 0;
+            plane.position.z = 0;*/
+            scene.clear();
+            setUp();
+            makePlane();
+            drawCubes();
+            makesSphere = new Sphere(10, 32, 16);
+            if (!gameOver) {
+                console.log("ello");
+                xspeed *= 2;
+            } else {
+                xspeed = xSPEED;
+
+            }
+
+            if (gameOver == true) {
+                stage = 1;
+            }
+            gameOver = false;
+            finished = false;
+
+
+            makesSphere.draw();
+            score = 0;
+            document.getElementById("Restart").innerHTML = "Restart";
+            var x = document.getElementById("Over");
+            x.style.display = "none";
+
+            //whne u click restart the stage keeps geting higher
+
+
+        }
+
+
+        //Sphere class
+        class Sphere {
+            constructor(r, w, h) {
+                this.r = r; //Radius
+                this.w = w;//Wdith segements
+                this.h = z;//Height segemnts
+                // this.sphere.castShadow = true;
+
+                geometry = new THREE.SphereGeometry(this.r, this.w, this.h);
+                material = new THREE.MeshLambertMaterial({ color: 0xffff00 });
+            }
+
+            draw() {
+                sphere = new THREE.Mesh(geometry, material);
+                sphere.position.x = 0;//forward anc back
+                sphere.position.y = 10;//up and down
+                sphere.position.z = 250;
+                sphere.castShadow = true;
+                scene.add(sphere);
+
+                //Wire Frame
+                const _wireframe2 = new THREE.WireframeGeometry(geometry);
+                const wireframe2 = new THREE.LineSegments(_wireframe2);
+                sphere.add(wireframe2);
+
+
+            }
+
+            //Jquery
+            jump() {
+
+                //keypresses with jQuery
+                $(document.body).on('keydown', function (e) {
+                    console.log(e.which);
+                    if (gameOver) {
+                        return;
+                    }
+                    switch (e.which) {
+                        // key code for space bar
+                        case 40:
+                            console.log('Going Down');
+                            sphere.position.x += 10;
+                            console.log(sphere.position.x);
+                            if (sphere.position.x > 45) {
+                                sphere.position.x = 45;
+                            }
+
+                            if (sphere.position.x < -45) {
+                                sphere.position.x = -45;
+                            }
+                            break;
+
+                        case 38:
+                            console.log('Going Up');
+                            sphere.position.x += -10;
+                            console.log(sphere.position.x);
+                            if (sphere.position.x > 45) {
+                                sphere.position.x = 45;
+                            }
+
+                            if (sphere.position.x < -45) {
+                                sphere.position.x = -45;
+                            }
+                            break;
+
+                    }
+                });
+            }
+
+
+        }//end of class
+
+        //cube class
+        class Cube {
+            constructor(w, h, d, x, y, z) {
+                this.w = w; //Radius
+                this.h = h;//Wdith segements
+                this.d = d;//Height segemnts
+                // this.sphere.castShadow = true;
+                this.x = x;
+                this.y = y;
+                this.z = z;
+
+
+                cubeGeom = new THREE.BoxGeometry(this.w, this.h, this.d);
+                material3 = new THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0.8, transparent: true });
+                //Changing colour of Cube Each Round
+                material3.color.setHSL(0.9, 0.9, 0.8)
+
+
+
+
+                this.cube = new THREE.Mesh(cubeGeom, material3);
+            }
+
+            draw() {
+                // cube.position.x= 0;//doesnt do anything
+                // cube.position.z=0;
+                scene.add(this.cube);
+
+                this.cube.position.x = this.x;
+                this.cube.position.y = this.y;
+                this.cube.position.z = this.z;
+
+
+
+
+                // //wire frame to see better 
+                // const _wireframe = new THREE.EdgesGeometry(cubeGeom); // or WireframeGeometry( geometry )
+                // const wireframe = new THREE.LineSegments(_wireframe);
+                // wireframe.position.y = 10;
+                // scene.add(wireframe);
+
+                // for (var i = 0; i < 20; i++) {
+                //     this.cube = new THREE.Mesh(cubeGeom, material3);
+                //     this.cube.position.y = 10;
+                //     this.cube.position.z = this.cube.position.z = +50 - 100 * Math.random();
+                //     scene.add(this.cube);
+
+                // }
+
+
+            }
+
+            move() {
+                this.cube.position.z += xspeed;
+
+            }
+
+        }//end of cube class
+
+
+        //function set up
+        function setUp() {
+
+            //Render stuff
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.body.appendChild(renderer.domElement);
+
+
+            //Adding a spotlight
+            var spotLight = new THREE.SpotLight(0xffffff);
+            spotLight.position.set(20, 400, 0);
+
+            spotLight.castShadow = true;
+            scene.add(spotLight);
+
+            // Ambient Light
+            var light = new THREE.AmbientLight(0xffffff);
+            light.intensity = 0.25;
+            scene.add(light);
+
+            //to help see where you are 
+            const axesHelper = new THREE.AxesHelper(100);
+            scene.add(axesHelper)
+
+            //All camera stuff
+            //Camera
+            camera.position.y = 200; //up and down
+            camera.position.x = 100;
+            camera.position.z = 0; //front and back
+            camera.lookAt(0, 0, 0);
+
+            helper = new THREE.CameraHelper(spotLight.shadow.camera);
+
+            //Render adding
+            //renderer.render(scene, camera);
+        }
+
+        //Plane
+        function makePlane() {
+            //add a Plane(flat surface)
+            const geometry2 = new THREE.PlaneGeometry(100, 600);//Changed from 50
+            const material2 = new THREE.MeshLambertMaterial({ color: 0xffff00 });
+            plane = new THREE.Mesh(geometry2, material2);
+            scene.add(plane);
+            plane.position.x = 0;
+            plane.position.y = 0;
+            plane.position.z = 0;
+            plane.receiveShadow = true;
+
+
+            //moves the plane sideways
+            plane.rotation.x = -Math.PI / 2;
+
+            //changing colour of plane
+            material2.color.setHSL(0.9, 0.5, 0.5)
+
+
+
+
+        }
+
+        function drawCubes() {
+            //creating array
+
+            ccube = [];
+
+            ccube[0] = new Cube(50, 20, 20, 10, 10, 200);
+            ccube[0].draw();
+
+
+            ccube[1] = new Cube(50, 20, 20, 5, 10, 100);
+            ccube[1].draw();
+
+            ccube[2] = new Cube(50, 20, 20, -5, 10, 40);
+            ccube[2].draw();
+
+
+            ccube[3] = new Cube(50, 20, 20, 10, 10, -25);
+            ccube[3].draw();
+
+            ccube[4] = new Cube(50, 20, 20, -5, 10, -95);
+            ccube[4].draw();
+
+
+            ccube[5] = new Cube(50, 20, 20, 15, 10, -180);
+            ccube[5].draw();
+
+        }
+        function animate() {
+            if (started && !gameOver && !finished) {
+                //Moving left to right
+                plane.position.z += xspeed;//-----------------------------------
+
+                for (var i = 0; i < ccube.length; i++) {
+                    ccube[i].move();
+                }
+
+                collision();
+
+                score += 1;
+                //-1 in order to print the right score amount
+                document.getElementById("Score").innerHTML = score - 1;
+
+                // if (makesSphere.sphere.position.y>= plane.position.y) {
+                //     console.log("End reachers");
+
+                // }
+
+
+                //checking if round over
+                if (plane.position.z > 500) {
+                    finished = true;
+                    var x = document.getElementById("Over");
+                    x.style.display = "block";
+                    stage += 1;
+                    document.getElementById("Message").innerHTML = "Proceed to Stage " + stage;
+                    document.getElementById("Restart").innerHTML = "Next Level";
+
+                }
+
+
+
+
+
+            }
+            //Changing colour of sphere
+            sphere.material.color.setHSL(addColour, 1, 0.5)
+            addColour += 0.001;
+
+
+
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        };
+
+        //Collission
+        function collision() {
+
+            //Trying to make stop when reaches end of line
+            // console.log("TFS" + this.sphere.position.y);
+
+            // //making ball stop when reaches end
+            // if (this.sphere.position.y> 10 - 5) {
+            //     this.sphere.position.y= 10 ;
+            // }
+
+            for (let i = 0; i < ccube.length; i++) {
+
+                // if (this.sphere.x = (this.ccube[i].x)) {
+                //     console.log("Collision");
+                // }
+
+
+
+                // if(sphere.position.x  = makesCube.x){
+                //     console.log("Collision");
+                // }
+
+                let xDistance = Math.abs(ccube[i].cube.position.x - sphere.position.x);
+                let yDistance = Math.abs(ccube[i].cube.position.y - sphere.position.y);
+                let zDistance = Math.abs(ccube[i].cube.position.z - sphere.position.z);
+                let xMax = (makesSphere.r + ccube[i].w / 2);
+                let yMax = (makesSphere.r + ccube[i].h / 2);
+                let zMax = (makesSphere.r + ccube[i].d / 2);
+
+                if (xDistance <= xMax && yDistance <= yMax
+                    && zDistance < zMax) {
+                    gameOver = true;
+
+                    var x = document.getElementById("Over");
+                    x.style.display = "block";
+                    document.getElementById("Message").innerHTML = "Game Over! Your final score is " + score + "!";
+
+                }
+
+
+
+            }
+
+
+        }
+
+        //Getting Faster
+        function round2() {
+
+            // var x = document.getElementById("LevelUp");
+            // x.style.display = "block";
+            // document.getElementById("Message").innerHTML = "LEVEL UP" + score + "!";
+            scene.clear();
+            setUp();
+            makePlane();
+            drawCubes();
+
+            // //Creating a sphere
+            makesSphere = new Sphere(10, 32, 16);
+            makesSphere.draw();
+
+            //inccreasing speed
+            xspeed *= 2;
+
+
+
+        }
+
+
+        //caling setup
+        setUp();
+        makePlane();
+        drawCubes();
+
+        // //Creating a sphere
+        makesSphere = new Sphere(10, 32, 16);
+        makesSphere.draw();
+        makesSphere.jump();
+        animate();
+
+
+
+    </script>
+</body>
+
+</html>
